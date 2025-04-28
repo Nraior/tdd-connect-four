@@ -1,19 +1,204 @@
 require './lib/tdd_connect_four/game_controller'
 describe GameController do
-  subject(:test) { described_class.new }
+  let(:player) { double('player', { symbol: 'x' }) }
+  let(:rules) { double('rules', { width: 7, height: 6 }) }
+  subject(:controller) { described_class.new([player, player], rules) }
+  let(:empty_board) do
+    [[nil, nil, nil, nil, nil, nil, nil],
+     [nil, nil, nil, nil, nil, nil, nil],
+     [nil, nil, nil, nil, nil, nil, nil],
+     [nil, nil, nil, nil, nil, nil, nil],
+     [nil, nil, nil, nil, nil, nil, nil],
+     [nil, nil, nil, nil, nil, nil, nil]]
+  end
+
+  before do
+    allow(player).to receive(:board=)
+    allow(player).to receive(:input_loop).and_return(1)
+  end
+
+  describe '#create_board' do
+    it 'returns board' do
+      board = controller.create_board(6, 7)
+      expect(board.flatten.length).to eq(42)
+    end
+  end
+
+  describe '#prepare_board' do
+    it 'updates board' do
+      expect { controller.prepare_board }.to change { controller.board.flatten.length }.by(42)
+    end
+
+    it 'created board is empty' do
+      controller.prepare_board
+      expect(controller.board).to eq(empty_board)
+    end
+  end
+
+  describe '#start_game' do
+    before do
+      allow(controller).to receive(:game_loop)
+    end
+    it 'calls prepare_board' do
+      expect(controller).to receive(:prepare_board).once
+      controller.start_game
+    end
+
+    it 'updates @playing' do
+      expect { controller.start_game }.to(change { controller.instance_variable_get(:@playing) })
+    end
+    it 'calls game_loop' do
+      expect(controller).to receive(:game_loop).once
+      controller.start_game
+    end
+  end
+
   describe '#game_loop' do
+    before do
+      allow(controller).to receive(:playing).and_return(true)
+      allow(controller).to receive(:make_move)
+    end
     it 'exits correctly' do
+      expect(player).to receive(:input_loop)
+      expect(controller).to receive(:check_winner).and_return(false).once
+      expect(controller).to receive(:check_draw).and_return(true).once
+      controller.game_loop
     end
   end
 
   describe '#make_move' do
-    it 'gets move from player' do
+    before do
+      controller.prepare_board
+      # allow(controller).to receive(:board).and_return(empty_board)
+    end
+    let(:player) { double('player', { symbol: 'x' }) }
+    it 'updates move on first row' do
+      controller.make_move(0, player)
+      transposed_board = controller.board.transpose
+      symbol_count = transposed_board[0].count(player.symbol)
+      expect(symbol_count).to eq(1)
+    end
+
+    it 'allow second column to have max' do
+      10.times do |time|
+        controller.make_move(1, player)
+      end
+      transposed_board = controller.board.transpose
+      symbol_count = transposed_board[1].count(player.symbol)
+      expect(symbol_count).to eq(6)
+    end
+
+    it "doesn't update move on wrong pos" do
+      controller.make_move(-1, player)
+      flattened = controller.board.flatten
+      count = flattened.count(player.symbol)
+      expect(count).to eq(0)
     end
   end
 
   describe '#check_winner' do
-  end
+    context 'when board is empty' do
+      it('returns false') do
+        result = controller.check_winner
+        expect(result).to eq(false)
+      end
+    end
 
-  describe '#reset' do
+    context 'when x is winning horizontally' do
+      let(:horizntally_winning_board) do
+        [[nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, 'x', 'x', 'x', 'x', nil]]
+      end
+
+      before do
+        allow(controller).to receive(:board).and_return(horizntally_winning_board)
+      end
+
+      it('returns true') do
+        result = controller.check_winner
+        expect(result).to eq(true)
+      end
+    end
+
+    context 'when board is full without win' do
+      let(:full_board) do
+        [%w[x x x o o o x],
+         %w[o o o x x x o],
+         %w[x x x o o o x],
+         %w[o o o x x x o],
+         %w[x x x o o o x],
+         %w[o o o x x x o]]
+      end
+
+      before do
+        allow(controller).to receive(:board).and_return(full_board)
+      end
+
+      it('returns true') do
+        result = controller.check_winner
+        expect(result).to eq(false)
+      end
+    end
+
+    context 'when x is almost winning horizontally' do
+      let(:horizntally_winning_board) do
+        [[nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, nil, nil, nil, nil, nil],
+         ['o', 'x', 'x', 'o', 'x', 'x', nil]]
+      end
+
+      before do
+        allow(controller).to receive(:board).and_return(horizntally_winning_board)
+      end
+
+      it('returns false') do
+        result = controller.check_winner
+        expect(result).to eq(false)
+      end
+    end
+
+    context 'when x is winning vertically' do
+      let(:vertically_winning_board) do
+        [[nil, nil, nil, nil, nil, nil, nil],
+         [nil, nil, 'o', nil, nil, nil, nil],
+         [nil, nil, 'x', nil, nil, nil, nil],
+         [nil, nil, 'x', nil, nil, nil, nil],
+         [nil, nil, 'x', nil, nil, nil, nil],
+         ['o', 'x', 'x', 'o', 'x', 'x', nil]]
+      end
+
+      before do
+        allow(controller).to receive(:board).and_return(vertically_winning_board)
+      end
+
+      it('returns true') do
+        result = controller.check_winner
+        expect(result).to eq(true)
+      end
+    end
+
+    context 'when x is winning diagonally' do
+      let(:diagnal_left_right_win) do
+        [['x', nil, nil, nil, nil, nil, nil],
+         [nil, 'x', 'o', nil, nil, nil, nil],
+         [nil, nil, 'x', nil, nil, nil, nil],
+         [nil, nil, 'x', 'x', nil, nil, nil],
+         [nil, nil, 'x', nil, nil, nil, nil],
+         ['o', 'x', 'x', 'o', 'x', 'x', nil]]
+      end
+
+      before do
+        allow(controller).to receive(:board).and_return(diagnal_left_right_win)
+      end
+      it('returns true') do
+      end
+    end
   end
 end

@@ -1,4 +1,6 @@
 class Player
+  attr_writer :board
+
   def initialize(name, board, rules = nil)
     @name = name
     @rules = rules

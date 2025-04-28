@@ -57,11 +57,12 @@ describe GameController do
     before do
       allow(controller).to receive(:playing).and_return(true)
       allow(controller).to receive(:make_move)
+      allow(controller).to receive(:handle_draw)
     end
     it 'exits correctly' do
       expect(player).to receive(:input_loop)
-      expect(controller).to receive(:check_winner).and_return(false).once
-      expect(controller).to receive(:check_draw).and_return(true).once
+      expect(controller).to receive(:check_winner).and_return(false).twice
+      expect(controller).to receive(:draw?).and_return(true).once
       controller.game_loop
     end
   end
@@ -69,7 +70,6 @@ describe GameController do
   describe '#make_move' do
     before do
       controller.prepare_board
-      # allow(controller).to receive(:board).and_return(empty_board)
     end
     let(:player) { double('player', { symbol: 'x' }) }
     it 'updates move on first row' do
@@ -138,7 +138,7 @@ describe GameController do
         allow(controller).to receive(:board).and_return(full_board)
       end
 
-      it('returns true') do
+      it('returns false') do
         result = controller.check_winner
         expect(result).to eq(false)
       end
@@ -189,7 +189,7 @@ describe GameController do
         [['x', nil, nil, nil, nil, nil, nil],
          [nil, 'x', 'o', nil, nil, nil, nil],
          [nil, nil, 'x', nil, nil, nil, nil],
-         [nil, nil, 'x', 'x', nil, nil, nil],
+         [nil, nil, 'o', 'x', nil, nil, nil],
          [nil, nil, 'x', nil, nil, nil, nil],
          ['o', 'x', 'x', 'o', 'x', 'x', nil]]
       end
@@ -198,6 +198,27 @@ describe GameController do
         allow(controller).to receive(:board).and_return(diagnal_left_right_win)
       end
       it('returns true') do
+        result = controller.check_winner
+        expect(result).to eq(true)
+      end
+    end
+  end
+
+  describe '#draw?' do
+    context('when board is not filled') do
+      before do
+        allow(controller).to receive(:board).and_return(empty_board)
+      end
+      it 'returns false' do
+        result = controller.draw?
+        expect(result).to eq(false)
+      end
+    end
+
+    context('when board is full') do
+      it 'returns true' do
+        result = controller.draw?
+        expect(result).to eq(true)
       end
     end
   end

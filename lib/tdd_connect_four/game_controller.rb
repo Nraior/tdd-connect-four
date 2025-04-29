@@ -8,6 +8,7 @@ class GameController
     @board = []
     @playing = false
     @tour = 0
+    @winning_count = 4
   end
 
   def update_players(players)
@@ -99,11 +100,10 @@ class GameController
 
   def check_horizontally(pos_x, pos_y, max = @rules.width)
     symbol = board[pos_y][pos_x]
-    min_check_x = pos_x - 1
-    max_check_x = pos_x + 2
-    return false if symbol.nil? || max_check_x >= max || min_check_x.negative?
+    max_check_x = pos_x + @winning_count - 1
+    return false if symbol.nil? || max_check_x >= max
 
-    (min_check_x..max_check_x).each do |pos|
+    (pos_x..max_check_x).each do |pos|
       return false if board[pos_y][pos] != symbol
     end
     symbol
@@ -112,11 +112,10 @@ class GameController
   def check_vertically(pos_x, pos_y)
     symbol = board[pos_y][pos_x]
 
-    min_check_y = pos_y - 1
-    max_check_y = pos_y + 2
-    return false if max_check_y >= @rules.height || min_check_y.negative?
+    max_check_y = pos_y + @winning_count - 1
+    return false if max_check_y >= @rules.height
 
-    (min_check_y..max_check_y).each do |pos|
+    (pos_y..max_check_y).each do |pos|
       return false if board[pos][pos_x] != symbol
     end
     symbol
@@ -124,24 +123,29 @@ class GameController
 
   def check_diagonal(pos_x, pos_y)
     symbol = board[pos_y][pos_x]
-    first_y = pos_y - 1
-    first_x = pos_x - 1
-    finish_y = pos_y + 2
-    finish_x = pos_x + 2
+    return false if pos_y + 2 >= @rules.height
 
-    first_x_right = pos_x + 1
-    finish_x_right = pos_x - 2
+    check_diagonal_right(pos_x, pos_y, symbol) || check_diagonal_left(pos_x, pos_y, symbol)
+  end
 
-    left = true
-    right = true
-
-    return false if first_y.negative? || first_x.negative? || finish_y >= @rules.height || finish_x >= @rules.width
+  def check_diagonal_left(pos_x, pos_y, symbol)
+    return false if pos_y + @winning_count - 1 >= @rules.height || pos_x + @winning_count >= @rules.width
 
     (0..3).each do |num|
-      left = false if board[first_y + num][first_x + num] != symbol
-      right = false if board[first_y + num][first_x_right - num] != symbol
+      return false if board[pos_x + num][pos_y + num] != symbol
     end
-    p right
-    left || right
+    true
+  end
+
+  def check_diagonal_right(pos_x, pos_y, symbol)
+    finish_x = pos_x - @winning_count + 1
+    finish_y = pos_y + @winning_count - 1
+
+    return false if finish_x.negative? || finish_y >= @rules.height
+
+    (0..3).each do |num|
+      return false if board[pos_y + num][pos_x - num] != symbol
+    end
+    true
   end
 end

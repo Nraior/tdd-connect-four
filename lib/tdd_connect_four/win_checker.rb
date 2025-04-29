@@ -60,7 +60,7 @@ class WinChecker
     return false if pos_y + @rules.winning_count - 1 >= @rules.height || pos_x + @rules.winning_count >= @rules.width
 
     (0..3).each do |num|
-      return false if board[pos_x + num][pos_y + num] != symbol
+      return false if board[pos_y + num][pos_x + num] != symbol
     end
     true
   end

@@ -13,10 +13,6 @@ describe WinChecker do
     let(:rules) { double('rules', { width: 7, height: 6, winning_count: 4 }) }
     subject(:win_checker) { described_class.new(rules, empty_board) }
 
-    before do
-      # allow
-    end
-
     context 'when board is empty' do
       it('returns false') do
         result = subject.check

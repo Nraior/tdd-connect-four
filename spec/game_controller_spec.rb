@@ -19,6 +19,7 @@ describe GameController do
     allow(controller).to receive(:p)
     allow(controller).to receive(:puts)
     allow(winner_checker).to receive(:update_board)
+    allow(winner_checker).to receive(:check)
     controller.update_players([player, player])
   end
 
@@ -98,34 +99,6 @@ describe GameController do
       flattened = controller.board.flatten
       count = flattened.count(player.symbol)
       expect(count).to eq(0)
-    end
-  end
-
-  describe '#check_winner' do
-    context 'When its empty' do
-      it('doesnt send win check command t winner checker') do
-        expect(winner_checker).to receive(:check_win_from_field).exactly(0).times
-        controller.check_winner
-      end
-    end
-
-    context 'when there are some fields filled' do
-      let(:small_board) do
-        [[nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, nil, nil, nil, nil, nil],
-         [nil, 'x', 'x', nil, 'x', 'o', nil]]
-      end
-
-      before do
-        allow(controller).to receive(:board).and_return(small_board)
-      end
-      it('sends win check commands to winner checker for every non empty field') do
-        expect(winner_checker).to receive(:check_win_from_field).exactly(4).times
-        controller.check_winner
-      end
     end
   end
 end

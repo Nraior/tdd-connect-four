@@ -1,7 +1,8 @@
 class Rules
-  attr_reader :max
+  attr_reader :width, :height
 
-  def initialize(max)
-    @max = max
+  def initialize(width, height)
+    @width = width
+    @height = height
   end
 end

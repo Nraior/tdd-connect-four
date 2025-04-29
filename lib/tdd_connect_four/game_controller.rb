@@ -1,12 +1,17 @@
+require_relative './board_presenter'
 class GameController
   attr_reader :board, :playing
 
-  def initialize(players, rules)
+  def initialize(rules)
     @rules = rules
-    @players = players
+    @players = []
     @board = []
     @playing = false
     @tour = 0
+  end
+
+  def update_players(players)
+    @players = players
   end
 
   def start_game
@@ -28,21 +33,26 @@ class GameController
 
   def game_loop
     while playing
+      puts 'Playing!'
+      BoardPresenter.present(board)
       move = current_player.input_loop
       make_move(move, current_player)
       break if check_winner || draw?
+
+      @tour += 1
     end
 
     if check_winner
       handle_win
-    elsif handle_draw
+    elsif draw?
       handle_draw
     end
   end
 
   def handle_win
     @playing = false
-    puts 'You win!'
+    BoardPresenter.present(@board)
+    puts "#{current_player.name} wins!"
   end
 
   def handle_draw
@@ -61,7 +71,9 @@ class GameController
   end
 
   def make_move(move, player)
-    return false if move.negative? || move >= board.length
+    return false if move.negative? || move >= board[0].length
+
+    puts "make move #{move}"
 
     transposed_board = board.transpose
     last_found_nil_index = transposed_board[move].reverse.find_index(nil)
@@ -117,24 +129,19 @@ class GameController
     finish_y = pos_y + 2
     finish_x = pos_x + 2
 
+    first_x_right = pos_x + 1
+    finish_x_right = pos_x - 2
+
     left = true
     right = true
+
     return false if first_y.negative? || first_x.negative? || finish_y >= @rules.height || finish_x >= @rules.width
 
-    (first_x..finish_x).each do |num|
-      if board[num][num] != symbol
-        left = false
-        break
-      end
+    (0..3).each do |num|
+      left = false if board[first_y + num][first_x + num] != symbol
+      right = false if board[first_y + num][first_x_right - num] != symbol
     end
-
-    # right
-    (first_x..finish_x).each_with_index do |num, index|
-      if board[num][finish_x - num] != symbol
-        right = false
-        break
-      end
-    end
+    p right
     left || right
   end
 end

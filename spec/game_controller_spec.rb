@@ -2,7 +2,7 @@ require './lib/tdd_connect_four/game_controller'
 describe GameController do
   let(:player) { double('player', { symbol: 'x' }) }
   let(:rules) { double('rules', { width: 7, height: 6 }) }
-  subject(:controller) { described_class.new([player, player], rules) }
+  subject(:controller) { described_class.new(rules) }
   let(:empty_board) do
     [[nil, nil, nil, nil, nil, nil, nil],
      [nil, nil, nil, nil, nil, nil, nil],
@@ -15,6 +15,9 @@ describe GameController do
   before do
     allow(player).to receive(:board=)
     allow(player).to receive(:input_loop).and_return(1)
+    allow(controller).to receive(:p)
+    allow(controller).to receive(:puts)
+    controller.update_players([player, player])
   end
 
   describe '#create_board' do
@@ -62,7 +65,7 @@ describe GameController do
     it 'exits correctly' do
       expect(player).to receive(:input_loop)
       expect(controller).to receive(:check_winner).and_return(false).twice
-      expect(controller).to receive(:draw?).and_return(true).once
+      expect(controller).to receive(:draw?).and_return(true).twice
       controller.game_loop
     end
   end
@@ -200,6 +203,32 @@ describe GameController do
       it('returns true') do
         result = controller.check_winner
         expect(result).to eq(true)
+      end
+    end
+
+    context 'when board x is  winning mid game' do
+      let(:mid_game) do
+        [
+          [nil, nil, nil, nil, nil, nil, nil],
+
+          [nil, nil, nil, nil, nil, nil, nil],
+
+          [nil, nil, nil, 'x', nil, nil, nil],
+
+          [nil, nil, 'x', 'o', nil, nil, nil],
+
+          [nil, 'x', 'x', 'o', nil, nil, nil],
+
+          ['x', 'o', 'o', 'o', 'x', nil, nil]
+        ]
+      end
+
+      before do
+        allow(controller).to receive(:board).and_return(mid_game)
+      end
+      it('returns true') do
+        result = controller.check_winner
+        expect(result).to eq true
       end
     end
   end

@@ -4,8 +4,6 @@ describe Player do
   let(:board) { double('board') }
   subject(:player) { described_class.new('George', board, rules) }
   before do
-    # allow(board).to receive(:transpose)
-    # allow(player).to receive(:board).and_return(board)
     allow(player).to receive(:puts)
   end
 

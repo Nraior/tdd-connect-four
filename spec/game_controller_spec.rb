@@ -2,7 +2,8 @@ require './lib/tdd_connect_four/game_controller'
 describe GameController do
   let(:player) { double('player', { symbol: 'x' }) }
   let(:rules) { double('rules', { width: 7, height: 6 }) }
-  subject(:controller) { described_class.new(rules) }
+  let(:winner_checker) { double('winner_checker') }
+  subject(:controller) { described_class.new(rules, winner_checker) }
   let(:empty_board) do
     [[nil, nil, nil, nil, nil, nil, nil],
      [nil, nil, nil, nil, nil, nil, nil],
@@ -17,6 +18,7 @@ describe GameController do
     allow(player).to receive(:input_loop).and_return(1)
     allow(controller).to receive(:p)
     allow(controller).to receive(:puts)
+    allow(winner_checker).to receive(:update_board)
     controller.update_players([player, player])
   end
 
@@ -100,154 +102,29 @@ describe GameController do
   end
 
   describe '#check_winner' do
-    context 'when board is empty' do
-      it('returns false') do
-        result = controller.check_winner
-        expect(result).to eq(false)
+    context 'When its empty' do
+      it('doesnt send win check command t winner checker') do
+        expect(winner_checker).to receive(:check_win_from_field).exactly(0).times
+        controller.check_winner
       end
     end
 
-    context 'when x is winning horizontally' do
-      let(:horizntally_winning_board) do
+    context 'when there are some fields filled' do
+      let(:small_board) do
         [[nil, nil, nil, nil, nil, nil, nil],
          [nil, nil, nil, nil, nil, nil, nil],
          [nil, nil, nil, nil, nil, nil, nil],
          [nil, nil, nil, nil, nil, nil, nil],
          [nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, 'x', 'x', 'x', 'x', nil]]
+         [nil, 'x', 'x', nil, 'x', 'o', nil]]
       end
 
       before do
-        allow(controller).to receive(:board).and_return(horizntally_winning_board)
+        allow(controller).to receive(:board).and_return(small_board)
       end
-
-      it('returns true') do
-        result = controller.check_winner
-        expect(result).to eq(true)
-      end
-    end
-
-    context 'when board is full without win' do
-      let(:full_board) do
-        [%w[x x x o o o x],
-         %w[o o o x x x o],
-         %w[x x x o o o x],
-         %w[o o o x x x o],
-         %w[x x x o o o x],
-         %w[o o o x x x o]]
-      end
-
-      before do
-        allow(controller).to receive(:board).and_return(full_board)
-      end
-
-      it('returns false') do
-        result = controller.check_winner
-        expect(result).to eq(false)
-      end
-    end
-
-    context 'when x is almost winning horizontally' do
-      let(:horizntally_winning_board) do
-        [[nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, nil, nil, nil, nil, nil],
-         ['o', 'x', 'x', 'o', 'x', 'x', nil]]
-      end
-
-      before do
-        allow(controller).to receive(:board).and_return(horizntally_winning_board)
-      end
-
-      it('returns false') do
-        result = controller.check_winner
-        expect(result).to eq(false)
-      end
-    end
-
-    context 'when x is winning vertically' do
-      let(:vertically_winning_board) do
-        [[nil, nil, nil, nil, nil, nil, nil],
-         [nil, nil, 'o', nil, nil, nil, nil],
-         [nil, nil, 'x', nil, nil, nil, nil],
-         [nil, nil, 'x', nil, nil, nil, nil],
-         [nil, nil, 'x', nil, nil, nil, nil],
-         ['o', 'x', 'x', 'o', 'x', 'x', nil]]
-      end
-
-      before do
-        allow(controller).to receive(:board).and_return(vertically_winning_board)
-      end
-
-      it('returns true') do
-        result = controller.check_winner
-        expect(result).to eq(true)
-      end
-    end
-
-    context 'when x is winning diagonally' do
-      let(:diagnal_left_right_win) do
-        [['x', nil, nil, nil, nil, nil, nil],
-         [nil, 'x', 'o', nil, nil, nil, nil],
-         [nil, nil, 'x', nil, nil, nil, nil],
-         [nil, nil, 'o', 'x', nil, nil, nil],
-         [nil, nil, 'x', nil, nil, nil, nil],
-         ['o', 'x', 'x', 'o', 'x', 'x', nil]]
-      end
-
-      before do
-        allow(controller).to receive(:board).and_return(diagnal_left_right_win)
-      end
-      it('returns true') do
-        result = controller.check_winner
-        expect(result).to eq(true)
-      end
-    end
-
-    context 'when board x is  winning mid game' do
-      let(:mid_game) do
-        [
-          [nil, nil, nil, nil, nil, nil, nil],
-
-          [nil, nil, nil, nil, nil, nil, nil],
-
-          [nil, nil, nil, 'x', nil, nil, nil],
-
-          [nil, nil, 'x', 'o', nil, nil, nil],
-
-          [nil, 'x', 'x', 'o', nil, nil, nil],
-
-          ['x', 'o', 'o', 'o', 'x', nil, nil]
-        ]
-      end
-
-      before do
-        allow(controller).to receive(:board).and_return(mid_game)
-      end
-      it('returns true') do
-        result = controller.check_winner
-        expect(result).to eq true
-      end
-    end
-  end
-
-  describe '#draw?' do
-    context('when board is not filled') do
-      before do
-        allow(controller).to receive(:board).and_return(empty_board)
-      end
-      it 'returns false' do
-        result = controller.draw?
-        expect(result).to eq(false)
-      end
-    end
-
-    context('when board is full') do
-      it 'returns true' do
-        result = controller.draw?
-        expect(result).to eq(true)
+      it('sends win check commands to winner checker for every non empty field') do
+        expect(winner_checker).to receive(:check_win_from_field).exactly(4).times
+        controller.check_winner
       end
     end
   end

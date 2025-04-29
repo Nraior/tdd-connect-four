@@ -2,13 +2,14 @@ require_relative './board_presenter'
 class GameController
   attr_reader :board, :playing
 
-  def initialize(rules)
+  def initialize(rules, win_checker)
     @rules = rules
     @players = []
     @board = []
     @playing = false
     @tour = 0
     @winning_count = 4
+    @win_checker = win_checker
   end
 
   def update_players(players)
@@ -27,6 +28,7 @@ class GameController
 
   def prepare_board
     @board = create_board(@rules.width, @rules.height)
+    @win_checker.update_board(@board)
     @players.each do |player|
       player.board = @board
     end
@@ -62,13 +64,7 @@ class GameController
   end
 
   def check_winner
-    board.each_with_index do |row, y|
-      row.each_with_index do |column, x|
-        next if board[y][x].nil?
-        return true if check_win_from_field(x, y)
-      end
-    end
-    false
+    @win_checker.check
   end
 
   def make_move(move, player)
